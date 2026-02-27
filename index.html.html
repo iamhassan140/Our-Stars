@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 — Our Starry Night ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020814;overflow:hidden;font-family:'Poppins',sans-serif;cursor:crosshair}
+canvas{position:fixed;inset:0}
+.ui{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:30px 20px;pointer-events:none;z-index:1}
+h1{font-family:'Comic Sans MS',cursive;color:#ffd;font-size:clamp(1.1rem,4vw,1.8rem);text-align:center;text-shadow:0 0 20px rgba(255,220,100,0.8)}
+.hint{font-family:'Comic Sans MS',cursive;color:rgba(255,220,150,0.6);font-size:clamp(0.75rem,2.5vw,0.9rem);text-align:center;animation:fade 2s ease-in-out infinite}
+@keyframes fade{0%,100%{opacity:0.4}50%{opacity:0.9}}
+.counter{font-family:'Poppins',sans-serif;color:rgba(255,220,150,0.5);font-size:0.75rem;text-align:center}
+.poem{
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  font-family:'Comic Sans MS',cursive;
+  color:rgba(255,220,150,0.6);font-size:clamp(0.7rem,2vw,0.85rem);
+  text-align:center;line-height:1.8;pointer-events:none;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <h1>✨ Click to add our stars</h1>
+  <p class="hint">Every star is a reason I love you</p>
+  <p class="counter" id="cnt">0 stars so far</p>
+</div>
+<div class="poem">Each star a moment,<br>each moment — you 🌙</div>
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W=canvas.width=innerWidth,H=canvas.height=innerHeight;
+window.addEventListener('resize',()=>{W=canvas.width=innerWidth;H=canvas.height=innerHeight});
+
+const stars=[];
+const bgStars=[];
+// Background stars
+for(let i=0;i<150;i++)bgStars.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.3,a:Math.random()});
+
+function lerp(a,b,t){return a+(b-a)*t}
+let frame=0;
+
+function drawBg(){
+  ctx.fillStyle='#020814';
+  ctx.fillRect(0,0,W,H);
+  bgStars.forEach(s=>{
+    ctx.save();ctx.globalAlpha=0.3+Math.sin(frame*0.02+s.a*10)*0.2;
+    ctx.beginPath();ctx.arc(s.x%W,s.y%H,s.r,0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.fill();ctx.restore();
+  });
+}
+
+function drawStar(s){
+  const age=frame-s.born;
+  const life=Math.min(age/30,1);
+  ctx.save();
+  ctx.globalAlpha=life*s.alpha;
+  // Glow
+  const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
+  g.addColorStop(0,s.color);g.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);
+  ctx.fillStyle=g;ctx.fill();
+  // Core
+  ctx.beginPath();ctx.arc(s.x,s.y,s.r*life,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();
+  // Sparkle
+  if(age<20){
+    ctx.globalAlpha=(1-age/20)*0.8;
+    [0,90,180,270].forEach(a=>{
+      const r=a*Math.PI/180;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);
+      ctx.lineTo(s.x+Math.cos(r)*(s.r*6*(1-age/20)),s.y+Math.sin(r)*(s.r*6*(1-age/20)));
+      ctx.strokeStyle='#ffd';ctx.lineWidth=1;ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+const colors=['#ffccff','#ccffff','#ffffcc','#ffcccc','#ccffcc','#ffd700'];
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  stars.push({x:e.clientX-rect.left,y:e.clientY-rect.top,r:Math.random()*3+2,alpha:0.6+Math.random()*0.4,color:colors[Math.floor(Math.random()*colors.length)],born:frame});
+  document.getElementById('cnt').textContent=stars.length+' star'+(stars.length!==1?'s':'')+' so far 💫';
+});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0],rect=canvas.getBoundingClientRect();
+  stars.push({x:t.clientX-rect.left,y:t.clientY-rect.top,r:Math.random()*3+2,alpha:0.6+Math.random()*0.4,color:colors[Math.floor(Math.random()*colors.length)],born:frame});
+  document.getElementById('cnt').textContent=stars.length+' star'+(stars.length!==1?'s':'')+' so far 💫';
+},{passive:false});
+
+function loop(){
+  frame++;drawBg();
+  stars.forEach(s=>drawStar(s));
+  requestAnimationFrame(loop);
+}loop();
+</script>
+</body>
+</html>
